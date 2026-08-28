@@ -16,7 +16,7 @@ WebServer server(80);
 // =========================
 
 // 左
-const int LEFT_TRIG = 5;
+const int LEFT_TRIG = 16;
 const int LEFT_ECHO = 18;
 
 // 中央
