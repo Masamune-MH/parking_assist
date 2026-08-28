@@ -18,10 +18,10 @@ WebServer server(80);
 // Firebase
 // =========================
 // Firebase Console(プロジェクト設定 / Realtime Database)で取得した値に置き換える
-#define API_KEY "YOUR_FIREBASE_API_KEY"
-#define DATABASE_URL "YOUR_FIREBASE_DATABASE_URL"
-#define USER_EMAIL "YOUR_FIREBASE_USER_EMAIL"
-#define USER_PASSWORD "YOUR_FIREBASE_USER_PASSWORD"
+#define API_KEY "AIzaSyBD-PwsaacQq6Ea5F3iZ_Jayie1KOHcFuQ"
+#define DATABASE_URL "https://parkassistllm-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define USER_EMAIL "gpbl2026group4@parkassistllm.local"
+#define USER_PASSWORD "RfQ7W4SmLVLhVpJhEAz3"
 
 FirebaseData fbdo;
 FirebaseAuth auth;

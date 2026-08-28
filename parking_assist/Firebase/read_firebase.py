@@ -5,11 +5,11 @@ import requests
 # Firebase configuration
 # ========================================
 
-FIREBASE_API_KEY = "YOUR_FIREBASE_API_KEY"
-FIREBASE_DATABASE_URL = "YOUR_FIREBASE_DATABASE_URL"
+FIREBASE_API_KEY = "AIzaSyBD-PwsaacQq6Ea5F3iZ_Jayie1KOHcFuQ"
+FIREBASE_DATABASE_URL = "https://parkassistllm-default-rtdb.asia-southeast1.firebasedatabase.app"
 
-FIREBASE_USER_EMAIL = "YOUR_FIREBASE_USER_EMAIL"
-FIREBASE_USER_PASSWORD = "YOUR_FIREBASE_USER_PASSWORD"
+FIREBASE_USER_EMAIL = "gpbl2026group4@parkassistllm.local"
+FIREBASE_USER_PASSWORD = "RfQ7W4SmLVLhVpJhEAz3"
 
 FIREBASE_PATH = "Parking/Current"
 
