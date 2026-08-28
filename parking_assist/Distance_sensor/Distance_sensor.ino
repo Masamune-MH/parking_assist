@@ -1,5 +1,8 @@
 #include <WiFi.h>
 #include <WebServer.h>
+#include <Firebase_ESP_Client.h>
+#include <addons/TokenHelper.h>
+#include <addons/RTDBHelper.h>
 
 // =========================
 // Wi-Fi
@@ -9,6 +12,23 @@ const char* ssid = "msmne";
 const char* password = "takamitakaka";
 
 WebServer server(80);
+
+
+// =========================
+// Firebase
+// =========================
+// Firebase Console(プロジェクト設定 / Realtime Database)で取得した値に置き換える
+#define API_KEY "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "YOUR_FIREBASE_DATABASE_URL"
+#define USER_EMAIL "YOUR_FIREBASE_USER_EMAIL"
+#define USER_PASSWORD "YOUR_FIREBASE_USER_PASSWORD"
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+unsigned long lastSend = 0;
+const unsigned long SEND_INTERVAL = 1000;
 
 
 // =========================
@@ -55,6 +75,31 @@ long getDistance(int trigPin, int echoPin) {
   long distance = duration * 0.034 / 2;
 
   return distance;
+}
+
+
+// =========================
+// Firebaseへアップロード
+// =========================
+
+void uploadToFirebase(long left, long center, long right) {
+
+  if (!Firebase.ready()) {
+    Serial.println("Firebase is not ready.");
+    return;
+  }
+
+  FirebaseJson json;
+  json.set("Left", left);
+  json.set("Center", center);
+  json.set("Right", right);
+
+  if (Firebase.RTDB.setJSON(&fbdo, "/Parking/Current", &json)) {
+    Serial.println("Firebase upload successful.");
+  } else {
+    Serial.print("Firebase upload failed: ");
+    Serial.println(fbdo.errorReason());
+  }
 }
 
 
@@ -132,6 +177,20 @@ void setup() {
   server.begin();
 
   Serial.println("Webサーバー開始");
+
+
+  // Firebase接続
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback;
+
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
+  Serial.println("Firebase初期化完了");
 }
 
 
@@ -165,6 +224,13 @@ void loop() {
   Serial.print("Right: ");
   Serial.print(right);
   Serial.println(" cm");
+
+
+  // Firebaseへは1秒ごとにアップロード
+  if (millis() - lastSend >= SEND_INTERVAL) {
+    lastSend = millis();
+    uploadToFirebase(left, center, right);
+  }
 
   delay(500);
 }
