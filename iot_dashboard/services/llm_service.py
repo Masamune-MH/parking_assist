@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_MODEL = "google/gemini-2.5-flash"
+OPENROUTER_MODEL = "google/gemini-3.6-flash"
 
 
 @st.cache_resource

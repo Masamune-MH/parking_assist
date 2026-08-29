@@ -360,7 +360,7 @@ def app_footer() -> None:
         """
         <div class="app-footer" role="contentinfo">
             <span>&copy; 2026 ParkAssist</span>
-            <span>Powered by Google Gemini</span>
+            <span>Powered by OpenRouter</span>
         </div>
         """
     )
