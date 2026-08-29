@@ -140,6 +140,7 @@ footer {
     justify-content: center;
     line-height: 16px;
     margin-top: 8px;
+    text-transform: uppercase;
 }
 
 .status-dot,
@@ -239,6 +240,17 @@ footer {
     color: var(--park-primary);
     font-size: 24px;
     font-weight: 700;
+    line-height: 32px;
+    margin: 0;
+}
+
+.app-header__title {
+    align-items: center;
+    color: var(--park-primary);
+    display: flex;
+    font-size: 24px;
+    font-weight: 700;
+    height: 64px;
     line-height: 32px;
     margin: 0;
 }
@@ -577,6 +589,7 @@ footer {
     font-weight: 700;
     gap: 5px;
     line-height: 16px;
+    text-transform: uppercase;
 }
 
 .sensor-reading__status i {
@@ -780,6 +793,51 @@ footer {
     color: #ffffff !important;
 }
 
+.st-key-assistance_header {
+    background: var(--park-bg);
+    border-bottom: 1px solid var(--park-border);
+    box-sizing: border-box;
+    min-height: 64px;
+    padding: 0 24px;
+}
+
+.st-key-assistance_header [data-testid="stHorizontalBlock"] {
+    align-items: center;
+    gap: 12px !important;
+    min-height: 64px;
+}
+
+.st-key-assistance_header .stButton,
+.st-key-assistance_header div[data-testid="stButton"] {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+
+.st-key-assistance_header .stButton > button,
+.st-key-assistance_header div[data-testid="stButton"] > button {
+    background: var(--park-surface) !important;
+    border-color: var(--park-primary) !important;
+    color: var(--park-primary) !important;
+    font-size: 13px !important;
+    margin-left: 0 !important;
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    width: 100%;
+}
+
+.st-key-assistance_header .stButton > button::before,
+.st-key-assistance_header div[data-testid="stButton"] > button::before {
+    display: none;
+}
+
+.st-key-assistance_header .stButton > button:hover,
+.st-key-assistance_header .stButton > button:focus,
+.st-key-assistance_header div[data-testid="stButton"] > button:hover,
+.st-key-assistance_header div[data-testid="stButton"] > button:focus {
+    background: var(--park-primary) !important;
+    color: #ffffff !important;
+}
+
 .stButton,
 div[data-testid="stButton"] {
     display: flex;
@@ -907,6 +965,21 @@ div[data-testid="stButton"] > button:focus {
         padding: 0 18px;
     }
 
+    .app-header__title {
+        font-size: 21px;
+        height: 58px;
+        line-height: 28px;
+    }
+
+    .st-key-assistance_header {
+        min-height: 58px;
+        padding: 0 18px;
+    }
+
+    .st-key-assistance_header [data-testid="stHorizontalBlock"] {
+        min-height: 58px;
+    }
+
     .home-intro {
         padding-top: 72px;
     }
@@ -957,6 +1030,24 @@ div[data-testid="stButton"] > button:focus {
     .app-header h1 {
         font-size: 21px;
         line-height: 28px;
+    }
+
+    .st-key-assistance_header [data-testid="stHorizontalBlock"] {
+        align-items: stretch;
+        display: grid !important;
+        gap: 8px !important;
+        grid-template-columns: 1fr;
+        min-height: auto;
+        padding: 14px 0;
+    }
+
+    .app-header__title {
+        height: auto;
+    }
+
+    .st-key-assistance_header .stButton,
+    .st-key-assistance_header div[data-testid="stButton"] {
+        justify-content: flex-start;
     }
 
     .home-intro {

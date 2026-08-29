@@ -1,0 +1,154 @@
+"""Deterministic sensor analysis for the Current Situation card."""
+
+from math import isfinite
+from typing import Mapping
+
+from config.languages import get_direction_label, get_situation_template
+
+
+SENSOR_DIRECTIONS = ("left", "center", "right")
+CRITICAL_DISTANCE_CM = 10
+WARNING_DISTANCE_CM = 20
+
+_STATUS_PRIORITY = {
+    "unknown": 0,
+    "safe": 1,
+    "warning": 2,
+    "critical": 3,
+}
+
+
+def normalize_distance(value: object) -> int | float | None:
+    """Return a valid non-negative distance in centimetres, if available."""
+    if isinstance(value, bool):
+        return None
+
+    try:
+        distance = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if not isfinite(distance) or distance < 0:
+        return None
+
+    return int(distance) if distance.is_integer() else distance
+
+
+def format_distance(distance: int | float | None) -> str:
+    if distance is None:
+        return "--"
+
+    numeric_distance = float(distance)
+    if numeric_distance.is_integer():
+        return str(int(numeric_distance))
+
+    return f"{numeric_distance:.1f}"
+
+
+def get_sensor_status(distance: object) -> str:
+    """Apply the single source of truth for sensor risk thresholds."""
+    normalized_distance = normalize_distance(distance)
+    if normalized_distance is None:
+        return "unknown"
+
+    if normalized_distance <= CRITICAL_DISTANCE_CM:
+        return "critical"
+
+    if normalized_distance <= WARNING_DISTANCE_CM:
+        return "warning"
+
+    return "safe"
+
+
+def _sensor_value(sensor_values: Mapping[str, object], direction: str) -> object:
+    if direction in sensor_values:
+        return sensor_values[direction]
+
+    title_case_direction = direction.title()
+    if title_case_direction in sensor_values:
+        return sensor_values[title_case_direction]
+
+    for key, value in sensor_values.items():
+        if isinstance(key, str) and key.casefold() == direction:
+            return value
+
+    return None
+
+
+def analyze_situation(sensor_values: Mapping[str, object] | None) -> dict[str, object]:
+    """Return objective data only; this function performs no network or LLM calls."""
+    readings_source = sensor_values if isinstance(sensor_values, Mapping) else {}
+    sensor_readings: dict[str, dict[str, int | float | str | None]] = {}
+
+    for direction in SENSOR_DIRECTIONS:
+        distance = normalize_distance(_sensor_value(readings_source, direction))
+        sensor_readings[direction] = {
+            "distance": distance,
+            "status": get_sensor_status(distance),
+        }
+
+    valid_readings = [
+        (direction, reading)
+        for direction, reading in sensor_readings.items()
+        if reading["distance"] is not None
+    ]
+
+    if not valid_readings:
+        objective_condition = {
+            "direction": None,
+            "distance": None,
+            "status": "unknown",
+        }
+    else:
+        nearest_direction, nearest_reading = min(
+            valid_readings,
+            key=lambda item: float(item[1]["distance"]),
+        )
+        overall_status = max(
+            (str(reading["status"]) for _, reading in valid_readings),
+            key=lambda status: _STATUS_PRIORITY[status],
+        )
+        objective_condition = {
+            "direction": nearest_direction,
+            "distance": nearest_reading["distance"],
+            "status": overall_status,
+        }
+
+    return {
+        "sensor_readings": sensor_readings,
+        "objective_condition": objective_condition,
+        "nearest_direction": objective_condition["direction"],
+        "nearest_distance": objective_condition["distance"],
+        "overall_status": objective_condition["status"],
+    }
+
+
+def format_current_situation(
+    objective_condition: Mapping[str, object],
+    language: str | None,
+) -> str:
+    """Format objective analysis through the local language configuration."""
+    status = str(objective_condition.get("status", "unknown"))
+    direction = objective_condition.get("direction")
+    distance = objective_condition.get("distance")
+
+    if status == "unknown" or not isinstance(direction, str) or distance is None:
+        return get_situation_template(language, "unavailable")
+
+    return get_situation_template(language, status).format(
+        direction=get_direction_label(language, direction),
+        distance=format_distance(normalize_distance(distance)),
+    )
+
+
+def get_current_situation(
+    sensor_values: Mapping[str, object] | None,
+    language: str | None,
+) -> dict[str, object]:
+    """Combine objective sensor analysis with its localized display text."""
+    situation = analyze_situation(sensor_values)
+    situation["current_situation"] = format_current_situation(
+        situation["objective_condition"],
+        language,
+    )
+    return situation

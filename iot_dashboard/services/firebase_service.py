@@ -51,7 +51,7 @@ def firebase_login():
 # ========================================
 
 def get_parking_data():
-    """Get real-time sensor data from Firebase"""
+    """Get real-time sensor data from Firebase without breaking the live UI."""
     try:
         id_token = firebase_login()
 
@@ -76,24 +76,16 @@ def get_parking_data():
         center = data.get("Center")
         right = data.get("Right")
 
-        if (
-            left is None
-            or center is None
-            or right is None
-        ):
-            raise ValueError("Sensor data is missing.")
-
         return {
             "left": left,
             "center": center,
             "right": right
         }
 
-    except Exception as e:
-        st.error(f"Firebase Error: {str(e)}")
-        # Return default data if Firebase fails
+    except Exception:
+        # A failed poll is represented as unavailable values, not as safe readings.
         return {
-            "left": 30,
-            "center": 30,
-            "right": 30
+            "left": None,
+            "center": None,
+            "right": None,
         }

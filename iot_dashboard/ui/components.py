@@ -4,19 +4,28 @@ from typing import Mapping
 
 import streamlit as st
 
+from config.languages import (
+    DEFAULT_LANGUAGE,
+    SUPPORTED_LANGUAGES,
+    get_sensor_status_label,
+    get_ui_text,
+    normalize_language,
+)
+from services.situation_service import format_distance, get_sensor_status
+
 
 STATUS_STYLES = {
     "safe": {
-        "label": "SAFE",
         "color": "#146c2e",
     },
     "warning": {
-        "label": "WARNING",
         "color": "#8d5200",
     },
     "critical": {
-        "label": "CRITICAL",
         "color": "#ba1a1a",
+    },
+    "unknown": {
+        "color": "#66706f",
     },
 }
 
@@ -29,30 +38,20 @@ def render_html(markup: str) -> None:
     st.html(_html(markup))
 
 
-def get_sensor_status(distance: float) -> str:
-    if distance <= 10:
-        return "critical"
-
-    if distance <= 20:
-        return "warning"
-
-    return "safe"
+def selected_language() -> str:
+    return normalize_language(st.session_state.get("language", DEFAULT_LANGUAGE))
 
 
-def _format_distance(distance: float) -> str:
-    numeric_distance = float(distance)
-
-    if numeric_distance.is_integer():
-        return str(int(numeric_distance))
-
-    return f"{numeric_distance:.1f}"
+def text(key: str) -> str:
+    return get_ui_text(selected_language(), key)
 
 
-def sensor_card(name: str, distance: float) -> str:
+def sensor_card(name: str, distance: object, language: str | None = None) -> str:
     status = get_sensor_status(distance)
     status_style = STATUS_STYLES[status]
     label = escape(name.upper())
-    value = _format_distance(distance)
+    value = format_distance(distance)
+    status_label = escape(get_sensor_status_label(language, status))
 
     return _html(
         f"""
@@ -62,7 +61,7 @@ def sensor_card(name: str, distance: float) -> str:
             <div class="sensor-card__unit">CM</div>
             <div class="sensor-card__status">
                 <span class="status-dot" aria-hidden="true"></span>
-                <span>{status_style['label']}</span>
+                <span>{status_label}</span>
             </div>
         </article>
         """
@@ -86,9 +85,10 @@ def navigation_panel() -> str:
     )
 
 
-def sensor_panel(sensor_data: Mapping[str, float]) -> None:
+def sensor_panel(sensor_data: Mapping[str, object]) -> None:
+    language = selected_language()
     cards = "\n".join(
-        sensor_card(label, sensor_data[key])
+        sensor_card(label, sensor_data.get(key), language=language)
         for key, label in (
             ("left", "Left"),
             ("center", "Center"),
@@ -112,7 +112,47 @@ def sensor_panel(sensor_data: Mapping[str, float]) -> None:
     )
 
 
-def app_header() -> None:
+def go_home() -> None:
+    st.session_state.view = "home"
+    st.rerun()
+
+
+def change_language() -> None:
+    st.session_state.ai_result = None
+    st.session_state.view = "language"
+    st.rerun()
+
+
+def assistance_header() -> None:
+    with st.container(key="assistance_header"):
+        title_column, home_column, language_column = st.columns(
+            [1, 0.18, 0.3],
+            gap="small",
+        )
+
+        with title_column:
+            render_html('<div class="app-header__title">ParkAssist LLM</div>')
+        with home_column:
+            if st.button(
+                text("home"),
+                key="assistance_home",
+                width="stretch",
+            ):
+                go_home()
+        with language_column:
+            if st.button(
+                text("change_language"),
+                key="assistance_change_language",
+                width="stretch",
+            ):
+                change_language()
+
+
+def app_header(show_navigation: bool = False) -> None:
+    if show_navigation:
+        assistance_header()
+        return
+
     render_html(
         """
         <header class="app-header">
@@ -153,7 +193,7 @@ def home_view() -> None:
     )
 
     if st.button(
-        "Get Parking Assistance",
+        text("get_assistance"),
         type="primary",
         key="get_parking_assistance",
     ):
@@ -171,23 +211,24 @@ def home_view() -> None:
 
 
 def select_language(language: str) -> None:
-    st.session_state.language = language
+    st.session_state.language = normalize_language(language)
+    st.session_state.ai_result = None
     st.session_state.view = "assistance"
     st.rerun()
 
 
 def language_selection_view() -> None:
     render_html(
-        """
+        f"""
         <section class="language-selection" aria-labelledby="language-title">
             <h2>ParkAssist LLM</h2>
-            <h3 id="language-title">Choose your language</h3>
+            <h3 id="language-title">{escape(text("choose_language"))}</h3>
         </section>
         """
     )
 
     with st.container(key="language_selection", gap="small"):
-        for language in ("English", "Japanese", "Tiếng Việt"):
+        for language in SUPPORTED_LANGUAGES:
             if st.button(
                 language,
                 key=f"language_{language}",
@@ -196,26 +237,32 @@ def language_selection_view() -> None:
                 select_language(language)
 
 
-def _sensor_reading_markup(label: str, distance: float) -> str:
+def _sensor_reading_markup(
+    label: str,
+    distance: object,
+    language: str | None = None,
+) -> str:
     status = get_sensor_status(distance)
     status_style = STATUS_STYLES[status]
+    status_label = escape(get_sensor_status_label(language, status))
 
     return _html(
         f"""
         <div class="sensor-reading sensor-reading--{label.lower()}" style="--sensor-color: {status_style['color']};">
             <span class="sensor-reading__label">{escape(label)}</span>
-            <strong class="sensor-reading__value">{_format_distance(distance)} cm</strong>
+            <strong class="sensor-reading__value">{format_distance(distance)} cm</strong>
             <span class="sensor-reading__status">
-                <i aria-hidden="true"></i>{status_style['label']}
+                <i aria-hidden="true"></i>{status_label}
             </span>
         </div>
         """
     )
 
 
-def vehicle_sensor_visualization(sensor_data: Mapping[str, float]) -> None:
+def vehicle_sensor_visualization(sensor_data: Mapping[str, object]) -> None:
+    language = selected_language()
     readings = {
-        key: _sensor_reading_markup(label, sensor_data[key])
+        key: _sensor_reading_markup(label, sensor_data.get(key), language=language)
         for key, label in (
             ("left", "LEFT"),
             ("center", "CENTER"),
@@ -223,7 +270,7 @@ def vehicle_sensor_visualization(sensor_data: Mapping[str, float]) -> None:
         )
     }
     rays = {
-        key: STATUS_STYLES[get_sensor_status(sensor_data[key])]["color"]
+        key: STATUS_STYLES[get_sensor_status(sensor_data.get(key))]["color"]
         for key in ("left", "center", "right")
     }
 
@@ -251,29 +298,29 @@ def vehicle_sensor_visualization(sensor_data: Mapping[str, float]) -> None:
     )
 
 
-def current_situation_card(text: str) -> None:
+def current_situation_card(content: str) -> None:
     render_html(
         f"""
         <article class="assistance-card current-situation" aria-labelledby="current-situation-title">
             <div class="assistance-card__heading">
                 <span class="information-icon" aria-hidden="true">i</span>
-                <h2 id="current-situation-title">Current Situation</h2>
+                <h2 id="current-situation-title">{escape(text("current_situation"))}</h2>
             </div>
-            <p>{escape(text)}</p>
+            <p>{escape(content)}</p>
         </article>
         """
     )
 
 
-def ai_suggestion_card(text: str) -> None:
+def ai_suggestion_card(content: str) -> None:
     render_html(
         f"""
         <article class="assistance-card ai-suggestion" aria-labelledby="ai-suggestion-title">
             <div class="assistance-card__heading">
                 <span class="suggestion-icon" aria-hidden="true"></span>
-                <h2 id="ai-suggestion-title">AI Suggestion</h2>
+                <h2 id="ai-suggestion-title">{escape(text("ai_suggestion"))}</h2>
             </div>
-            <p>{escape(text)}</p>
+            <p>{escape(content)}</p>
         </article>
         """
     )
@@ -312,7 +359,7 @@ def audio_controls() -> None:
         with audio_column:
             audio_enabled = st.session_state.audio_enabled
             if st.button(
-                "Mute" if audio_enabled else "Speaker",
+                text("voice_off") if audio_enabled else text("voice_on"),
                 icon=":material/volume_up:" if audio_enabled else ":material/volume_off:",
                 key="audio_toggle",
                 width="stretch",
@@ -321,28 +368,51 @@ def audio_controls() -> None:
                 st.rerun()
 
 
-def assistance_view(sensor_data: Mapping[str, float]) -> None:
-    default_result = {
-        "current_situation": (
-            "An obstacle is very close to the right-front side of the monitored "
-            "area. The right sensor currently measures approximately 8 cm of "
-            "clearance, while significantly more clearance is available through "
-            "the center and left sensing directions."
-        ),
-        "suggestion": (
-            "Reverse slowly while steering slightly toward the left. Continue "
-            "monitoring the right-side clearance while moving."
-        ),
-    }
-    ai_result = st.session_state.ai_result
-    result = ai_result if isinstance(ai_result, Mapping) else default_result
+def _current_situation_content(situation: Mapping[str, object] | None) -> str:
+    if isinstance(situation, Mapping):
+        return str(
+            situation.get("current_situation")
+            or "Sensor readings are temporarily unavailable."
+        )
 
-    current_situation_card(
-        str(result.get("current_situation") or default_result["current_situation"])
+    return "Sensor readings are temporarily unavailable."
+
+
+def _ai_suggestion_content() -> str:
+    default_suggestion = (
+        "Reverse slowly while steering slightly toward the left. Continue "
+        "monitoring the right-side clearance while moving."
     )
-    ai_suggestion_card(str(result.get("suggestion") or default_result["suggestion"]))
-    vehicle_sensor_visualization(sensor_data)
+    ai_result = st.session_state.ai_result
+    suggestion = (
+        str(ai_result.get("suggestion") or default_suggestion)
+        if isinstance(ai_result, Mapping)
+        else default_suggestion
+    )
+
+    return suggestion
+
+
+def render_live_assistance(
+    sensor_data: Mapping[str, object],
+    situation: Mapping[str, object] | None,
+    current_situation_container: object,
+    visualization_container: object,
+) -> None:
+    with current_situation_container:
+        current_situation_card(_current_situation_content(situation))
+
+    with visualization_container:
+        vehicle_sensor_visualization(sensor_data)
+
+
+def assistance_view() -> tuple[object, object]:
+    current_situation_container = st.empty()
+    ai_suggestion_card(_ai_suggestion_content())
+    visualization_container = st.empty()
     audio_controls()
+
+    return current_situation_container, visualization_container
 
 
 def assistance_placeholder_view() -> None:
