@@ -1,10 +1,23 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from services.llm_service import build_parking_guidance_prompt, get_parking_guidance
+from services.llm_service import (
+    DEFAULT_OPENROUTER_MODEL,
+    build_parking_guidance_prompt,
+    get_openrouter_model,
+    get_parking_guidance,
+)
 
 
 class LlmServiceTests(unittest.TestCase):
+    @patch.dict(
+        "services.llm_service.os.environ",
+        {"OPENROUTER_MODEL": "test/override-model"},
+    )
+    def test_model_can_be_overridden_by_environment(self) -> None:
+        self.assertNotEqual(DEFAULT_OPENROUTER_MODEL, "test/override-model")
+        self.assertEqual(get_openrouter_model(), "test/override-model")
+
     def test_prompt_uses_python_supplied_snapshot_and_condition(self) -> None:
         prompt = build_parking_guidance_prompt(
             {"left": 120, "center": 85, "right": 8},
@@ -89,6 +102,11 @@ class LlmServiceTests(unittest.TestCase):
         )
 
         self.assertEqual(post.call_args.kwargs["timeout"], 5)
+        self.assertEqual(post.call_args.kwargs["json"]["max_tokens"], 120)
+        self.assertEqual(
+            post.call_args.kwargs["json"]["reasoning"],
+            {"effort": "none", "exclude": True},
+        )
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ from config.languages import (
 )
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_MODEL = "google/gemini-3.6-flash"
+DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3.5-lightning:free"
 
 
 @st.cache_resource
@@ -21,6 +21,16 @@ def get_openrouter_api_key() -> str | None:
     """Lấy API key OpenRouter từ Streamlit secrets hoặc biến môi trường."""
     api_key = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
     return api_key or None
+
+
+def get_openrouter_model() -> str:
+    """Allow deployments with credit to select a different OpenRouter model."""
+    configured_model = (
+        st.secrets.get("OPENROUTER_MODEL")
+        or os.getenv("OPENROUTER_MODEL")
+        or DEFAULT_OPENROUTER_MODEL
+    )
+    return str(configured_model)
 
 
 def _extract_openrouter_text(response_data: dict) -> str:
@@ -100,6 +110,7 @@ def build_parking_guidance_prompt(
         - Do not override, reinterpret, or contradict the objective condition supplied by Python.
         - Respond only in the selected language.
         - Avoid unnecessary explanation.
+        - Do not include analysis, reasoning, or numbered steps.
         - Provide a short safe driving tips at the end of your response. No need to begin with "Safe Driving Tips", just tell it directly.
         """
     ).strip()
@@ -131,11 +142,16 @@ def get_parking_guidance(
             "X-Title": "ParkAssist LLM",
         }
         payload = {
-            "model": OPENROUTER_MODEL,
+            "model": get_openrouter_model(),
             "messages": [
                 {"role": "user", "content": prompt}
             ],
             "temperature": 0.3,
+            "max_tokens": 120,
+            "reasoning": {
+                "effort": "none",
+                "exclude": True,
+            },
         }
 
         response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=5)
