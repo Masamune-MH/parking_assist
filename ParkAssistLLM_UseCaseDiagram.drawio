@@ -1,0 +1,112 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="KgiTV9fspsGP5rA8ze0Y">
+    <mxGraphModel dx="1144" dy="586" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-19" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="530" width="460" x="200" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-2" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Driver" vertex="1">
+          <mxGeometry height="60" width="30" x="120" y="187.5" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-9" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="View Sensor Readings" vertex="1">
+          <mxGeometry height="40" width="80" x="260" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-10" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Request Parking Assistance" vertex="1">
+          <mxGeometry height="35" width="90" x="300" y="212.5" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-11" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Select Language" vertex="1">
+          <mxGeometry height="35" width="90" x="290" y="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-13" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Listen to Voice Guidance" vertex="1">
+          <mxGeometry height="35" width="90" x="290" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-14" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ESP32 IoT Device" vertex="1">
+          <mxGeometry height="50" width="95" x="690" y="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-15" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Control Audio Playback" vertex="1">
+          <mxGeometry height="40" width="80" x="250" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-16" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Measure and collect distance data" vertex="1">
+          <mxGeometry height="40" width="100" x="520" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-17" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Fetch sensor data to realtime database" vertex="1">
+          <mxGeometry height="40" width="100" x="520" y="197.5" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-21" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="LLM Model" vertex="1">
+          <mxGeometry height="40" width="95" x="690" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-22" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Receive sensor data + predefined prompt" vertex="1">
+          <mxGeometry height="50" width="100" x="480" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Produce reasoning on vehicle situation" vertex="1">
+          <mxGeometry height="45" width="100" x="450" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-24" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=8;" value="Produce suggestion for parking assistance" vertex="1">
+          <mxGeometry height="50" width="100" x="480" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-25" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-9" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-26" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="355" y="150" as="sourcePoint" />
+            <mxPoint x="230" y="258" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-27" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-10" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="415" y="190" as="sourcePoint" />
+            <mxPoint x="260" y="233" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-28" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-13" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="485" y="242" as="sourcePoint" />
+            <mxPoint x="320" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-29" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-15" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;endArrow=none;endFill=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="445" y="350" as="sourcePoint" />
+            <mxPoint x="140" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-30" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontStyle=4" value="ParkAssist LLM Use case Diagram" vertex="1">
+          <mxGeometry height="30" width="260" x="310" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-31" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-16" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-14">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="465" y="252" as="sourcePoint" />
+            <mxPoint x="300" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-32" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-17" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-14">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="180" as="sourcePoint" />
+            <mxPoint x="730" y="213" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-33" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-22" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-21">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="240" as="sourcePoint" />
+            <mxPoint x="820" y="273" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-34" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-23" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-21">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="690" y="350" as="sourcePoint" />
+            <mxPoint x="790" y="435" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TunjMRUMWfIs2B9T2rpp-35" edge="1" parent="1" source="TunjMRUMWfIs2B9T2rpp-24" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="TunjMRUMWfIs2B9T2rpp-21">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="690" y="390" as="sourcePoint" />
+            <mxPoint x="820" y="392" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
