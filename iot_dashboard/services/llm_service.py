@@ -76,7 +76,6 @@ def get_parking_guidance(left: float, center: float, right: float, language: str
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.3,
-        "max_tokens": 80,
     }
 
     try:
