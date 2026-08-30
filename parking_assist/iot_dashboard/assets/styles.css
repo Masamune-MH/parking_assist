@@ -227,12 +227,10 @@ footer {
 .app-header {
     align-items: center;
     background: var(--park-bg);
-    border-bottom: 1px solid var(--park-border);
     box-sizing: border-box;
     display: flex;
     height: 64px;
-    justify-content: space-between;
-    padding: 0 24px;
+    padding: 0;
 }
 
 .app-header h1 {
@@ -247,6 +245,41 @@ footer {
     align-items: center;
     display: flex;
     gap: 14px;
+}
+
+.st-key-app_header_layout {
+    border-bottom: 1px solid var(--park-border);
+    box-sizing: border-box;
+    min-height: 64px;
+    padding: 0 24px;
+}
+
+.st-key-app_header_layout [data-testid="stHorizontalBlock"] {
+    align-items: center;
+    min-height: 64px;
+}
+
+.st-key-app_header_layout .stButton,
+.st-key-app_header_layout div[data-testid="stButton"] {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+
+.st-key-assistance_home .stButton > button,
+.st-key-assistance_home div[data-testid="stButton"] > button,
+.st-key-assistance_home > button {
+    background: var(--park-surface) !important;
+    border-color: var(--park-primary) !important;
+    color: var(--park-primary) !important;
+    font-size: 15px !important;
+    min-height: 42px !important;
+    padding: 8px 20px !important;
+}
+
+.st-key-assistance_home .stButton > button::before,
+.st-key-assistance_home div[data-testid="stButton"] > button::before,
+.st-key-assistance_home > button::before {
+    display: none;
 }
 
 .header-icon {
@@ -405,6 +438,23 @@ footer {
     line-height: 24px;
     margin: 14px auto 0;
     max-width: 540px;
+}
+
+.st-key-home_action {
+    margin: 22px auto 0;
+    max-width: 760px;
+    width: 100%;
+}
+
+.st-key-home_action .stButton,
+.st-key-home_action div[data-testid="stButton"] {
+    margin-top: 0;
+}
+
+.st-key-home_action .stButton > button,
+.st-key-home_action div[data-testid="stButton"] > button {
+    margin-left: 0;
+    width: 100%;
 }
 
 .language-selection,
@@ -803,7 +853,7 @@ div[data-testid="stButton"] > button {
     line-height: 20px !important;
     min-height: 48px !important;
     padding: 12px 32px !important;
-    margin-left: 490px;
+    margin-left: 0;
 }
 
 .stButton > button::before,
