@@ -406,13 +406,23 @@ def render_live_assistance(
         vehicle_sensor_visualization(sensor_data)
 
 
-def assistance_view() -> tuple[object, object]:
+def render_live_ai_suggestion(
+    ai_suggestion_container: object,
+    suggestion: str,
+) -> None:
+    with ai_suggestion_container:
+        ai_suggestion_card(suggestion)
+
+
+def assistance_view() -> tuple[object, object, object]:
     current_situation_container = st.empty()
-    ai_suggestion_card(_ai_suggestion_content())
+    ai_suggestion_container = st.empty()
+    with ai_suggestion_container:
+        ai_suggestion_card(_ai_suggestion_content())
     visualization_container = st.empty()
     audio_controls()
 
-    return current_situation_container, visualization_container
+    return current_situation_container, ai_suggestion_container, visualization_container
 
 
 def assistance_placeholder_view() -> None:
