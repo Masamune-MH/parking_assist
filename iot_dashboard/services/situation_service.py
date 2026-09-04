@@ -17,6 +17,18 @@ SENSOR_BASELINE_CM = 43.0
 # Below this tilt, the vehicle is treated as parallel to the obstacle.
 ANGLE_STRAIGHT_THRESHOLD_DEG = 3.0
 
+# Thresholds for the deterministic driving-guidance decision.
+GUIDANCE_STOP_DISTANCE_CM = 10
+GUIDANCE_MINOR_ANGLE_DEG = 5
+GUIDANCE_CORRECTION_ANGLE_DEG = 15
+GUIDANCE_CORRECTION_NEAR_DISTANCE_CM = 15
+
+GUIDANCE_STOP = "stop"
+GUIDANCE_CORRECTION_MANEUVER = "correction_maneuver"
+GUIDANCE_STEER_LEFT = "steer_left"
+GUIDANCE_STEER_RIGHT = "steer_right"
+GUIDANCE_CONTINUE_STRAIGHT = "continue_straight"
+
 _STATUS_PRIORITY = {
     "unknown": 0,
     "safe": 1,
@@ -214,3 +226,32 @@ def get_vehicle_angle(
     left = normalize_distance(_sensor_value(readings_source, "left"))
     right = normalize_distance(_sensor_value(readings_source, "right"))
     return format_vehicle_angle(left, right, language)
+
+
+def decide_guidance_category(
+    left: float,
+    center: float,
+    right: float,
+    angle_deg: float | None,
+) -> str:
+    """Deterministically pick which driving instruction applies right now.
+
+    This is the single source of truth for *what* to tell the driver; an LLM
+    (or any other renderer) is only responsible for phrasing the chosen
+    category naturally, not for re-deriving it from the raw numbers.
+    """
+    if min(left, center, right) < GUIDANCE_STOP_DISTANCE_CM:
+        return GUIDANCE_STOP
+
+    if angle_deg is not None and abs(angle_deg) >= GUIDANCE_CORRECTION_ANGLE_DEG:
+        near_side_distance = right if angle_deg > 0 else left
+        if near_side_distance < GUIDANCE_CORRECTION_NEAR_DISTANCE_CM:
+            return GUIDANCE_CORRECTION_MANEUVER
+
+    if angle_deg is not None and angle_deg >= GUIDANCE_MINOR_ANGLE_DEG:
+        return GUIDANCE_STEER_LEFT
+
+    if angle_deg is not None and angle_deg <= -GUIDANCE_MINOR_ANGLE_DEG:
+        return GUIDANCE_STEER_RIGHT
+
+    return GUIDANCE_CONTINUE_STRAIGHT

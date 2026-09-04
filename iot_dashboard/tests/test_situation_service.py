@@ -2,6 +2,7 @@ import unittest
 
 from services.situation_service import (
     analyze_situation,
+    decide_guidance_category,
     get_current_situation,
     get_sensor_status,
 )
@@ -55,6 +56,42 @@ class SituationServiceTests(unittest.TestCase):
         self.assertEqual(result["sensor_readings"]["center"]["status"], "unknown")
         self.assertEqual(result["nearest_direction"], "right")
         self.assertEqual(result["overall_status"], "critical")
+
+
+class GuidanceCategoryTests(unittest.TestCase):
+    def test_critical_distance_beats_everything(self) -> None:
+        self.assertEqual(decide_guidance_category(9, 50, 50, angle_deg=None), "stop")
+        self.assertEqual(decide_guidance_category(50, 9, 50, angle_deg=30), "stop")
+
+    def test_small_tilt_is_treated_as_straight(self) -> None:
+        self.assertEqual(
+            decide_guidance_category(40, 40, 40, angle_deg=None), "continue_straight"
+        )
+        self.assertEqual(
+            decide_guidance_category(40, 40, 40, angle_deg=4.9), "continue_straight"
+        )
+        self.assertEqual(
+            decide_guidance_category(40, 40, 40, angle_deg=-4.9), "continue_straight"
+        )
+
+    def test_moderate_tilt_gives_minor_steering(self) -> None:
+        self.assertEqual(decide_guidance_category(40, 40, 40, angle_deg=6), "steer_left")
+        self.assertEqual(decide_guidance_category(40, 40, 40, angle_deg=-6), "steer_right")
+
+    def test_large_tilt_with_room_stays_minor_steering(self) -> None:
+        # Angle is large but the near side (right, since angle > 0) still has
+        # plenty of clearance, so steering alone is still workable.
+        self.assertEqual(
+            decide_guidance_category(80, 40, 40, angle_deg=20), "steer_left"
+        )
+
+    def test_large_tilt_with_tight_clearance_needs_correction(self) -> None:
+        self.assertEqual(
+            decide_guidance_category(80, 40, 12, angle_deg=20), "correction_maneuver"
+        )
+        self.assertEqual(
+            decide_guidance_category(12, 40, 80, angle_deg=-20), "correction_maneuver"
+        )
 
 
 if __name__ == "__main__":

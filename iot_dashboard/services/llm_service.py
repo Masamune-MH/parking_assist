@@ -2,8 +2,61 @@ import os
 import streamlit as st
 import requests
 
+from services.situation_service import (
+    GUIDANCE_CONTINUE_STRAIGHT,
+    GUIDANCE_CORRECTION_MANEUVER,
+    GUIDANCE_STEER_LEFT,
+    GUIDANCE_STEER_RIGHT,
+    GUIDANCE_STOP,
+    decide_guidance_category,
+)
+
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODEL = "google/gemini-3.6-flash"
+
+# Fallback text used when there's no API key and as a safety net if the LLM
+# call fails outright. The LLM's job is only to phrase these more naturally.
+CATEGORY_DEFAULT_RESPONSES = {
+    GUIDANCE_STOP: {
+        "English": "Stop now, you're very close to an obstacle.",
+        "Japanese": "今すぐ停止してください。障害物にとても近づいています。",
+        "Tiếng Việt": "Dừng lại ngay, bạn đang rất gần chướng ngại vật.",
+    },
+    GUIDANCE_CORRECTION_MANEUVER: {
+        "English": "Stop, pull forward a little, straighten the wheel, and reverse again.",
+        "Japanese": "一度停止して少し前に進み、ハンドルを戻してからもう一度バックしてください。",
+        "Tiếng Việt": "Dừng lại, tiến lên một chút, đánh thẳng vô-lăng rồi lùi lại.",
+    },
+    GUIDANCE_STEER_LEFT: {
+        "English": "Steer slightly left while reversing.",
+        "Japanese": "ハンドルを少し左に切りながら下がってください。",
+        "Tiếng Việt": "Đánh nhẹ vô-lăng sang trái trong khi lùi.",
+    },
+    GUIDANCE_STEER_RIGHT: {
+        "English": "Steer slightly right while reversing.",
+        "Japanese": "ハンドルを少し右に切りながら下がってください。",
+        "Tiếng Việt": "Đánh nhẹ vô-lăng sang phải trong khi lùi.",
+    },
+    GUIDANCE_CONTINUE_STRAIGHT: {
+        "English": "Looking good, continue reversing slowly and steadily.",
+        "Japanese": "良い状態です。そのままゆっくり下がってください。",
+        "Tiếng Việt": "Ổn rồi, tiếp tục lùi chậm và đều.",
+    },
+}
+
+CATEGORY_DESCRIPTIONS = {
+    GUIDANCE_STOP: "the obstacle is critically close; tell the driver to stop immediately",
+    GUIDANCE_CORRECTION_MANEUVER: (
+        "the vehicle is too angled for steering alone to fix in the space left; tell the "
+        "driver to stop, pull forward a little, straighten the wheel, and reverse again"
+    ),
+    GUIDANCE_STEER_LEFT: "tell the driver to steer slightly left while reversing",
+    GUIDANCE_STEER_RIGHT: "tell the driver to steer slightly right while reversing",
+    GUIDANCE_CONTINUE_STRAIGHT: (
+        "the vehicle is essentially straight with no urgent issue; tell the driver to "
+        "continue reversing steadily (do not invent a steering correction)"
+    ),
+}
 
 
 @st.cache_resource
@@ -46,44 +99,31 @@ def get_parking_guidance(
     angle_deg: float | None = None,
 ) -> str:
     """
-    Xử lý dữ liệu cảm biến và tạo câu lệnh chỉ dẫn bằng AI theo ngôn ngữ được chọn.
-    Dùng OpenRouter API thay vì Google Gemini SDK để tương thích với key OpenRouter.
+    Decide *what* the driver needs to hear deterministically (see
+    situation_service.decide_guidance_category), then ask the LLM only to
+    phrase that decision as one natural, spoken sentence — the LLM does not
+    re-derive the decision itself, so its output stays predictable even
+    though the wording varies.
     """
-    default_responses = {
-        "English": "Reverse slowly while monitoring the distance.",
-        "Japanese": "ゆっくり後退してください。",
-        "Tiếng Việt": "Lùi xe chậm và theo dõi khoảng cách."
-    }
+    category = decide_guidance_category(left, center, right, angle_deg)
+    default_text = CATEGORY_DEFAULT_RESPONSES[category].get(
+        language, CATEGORY_DEFAULT_RESPONSES[category]["English"]
+    )
 
     api_key = get_openrouter_api_key()
     if not api_key:
-        return default_responses.get(language, "Unable to process at this time.")
-
-    if angle_deg is None:
-        angle_context = "Estimated vehicle tilt: unknown."
-    elif abs(angle_deg) < 3:
-        angle_context = "Estimated vehicle tilt: roughly parallel to the obstacle behind it."
-    else:
-        tilt_side = "right" if angle_deg > 0 else "left"
-        angle_context = (
-            f"Estimated vehicle tilt: about {abs(angle_deg):.1f} degrees, "
-            f"with the rear-{tilt_side} side closer to the obstacle behind it."
-        )
+        return default_text
 
     prompt = f"""
-    You are a professional in-car parking and driving assistant sitting in the passenger seat.
-    Real-time rear sensor distance data:
-    - Left: {left} cm
-    - Center: {center} cm
-    - Right: {right} cm
-    - {angle_context}
+    You are a friendly in-car parking assistant speaking naturally to the driver,
+    like a helpful human co-pilot — not a robot reading out rules.
 
-    Decide the single most useful instruction to say right now:
-    - If the tilt is small (under ~10 degrees) and there is enough clearance on all sides, give a short steering correction (e.g. steer slightly left/right while reversing).
-    - If the tilt is large (roughly 15 degrees or more) and the near side is getting close (under ~15 cm), steering alone will not straighten the car out in the remaining space. In that case, tell the driver to stop, pull forward a little, straighten the wheel, and reverse again to correct the angle (a correction maneuver / 切り返し), instead of just telling them to keep steering.
-    - If any side is critically close (under ~10 cm) regardless of angle, prioritize telling the driver to stop immediately.
+    The instruction to give has already been decided: {CATEGORY_DESCRIPTIONS[category]}.
 
-    Requirement: Provide an extremely short, natural driving instruction sentence spoken directly to the driver in this exact language: {language}.
+    Task: phrase that exact instruction as ONE short, natural spoken sentence in
+    {language}. Vary the wording naturally each time rather than sounding robotic.
+    Do NOT mention specific distances, degrees, or which side (left/right) triggered
+    this — just give the plain instruction itself, nothing else.
     """
 
     headers = {
@@ -106,6 +146,6 @@ def get_parking_guidance(
         response.raise_for_status()
         data = response.json()
         reply = _extract_openrouter_text(data)
-        return reply.strip() or default_responses.get(language, "Unable to process at this time.")
+        return reply.strip() or default_text
     except Exception:
-        return default_responses.get(language, "Unable to process at this time.")
+        return default_text
