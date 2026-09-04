@@ -1,14 +1,21 @@
 """Deterministic sensor analysis for the Current Situation card."""
 
-from math import isfinite
+from math import atan2, degrees, isfinite
 from typing import Mapping
 
-from config.languages import get_direction_label, get_situation_template
+from config.languages import get_angle_template, get_direction_label, get_situation_template
 
 
 SENSOR_DIRECTIONS = ("left", "center", "right")
 CRITICAL_DISTANCE_CM = 10
 WARNING_DISTANCE_CM = 20
+
+# Straight-line spacing between the left and right ultrasonic sensors,
+# measured on the physical rig (2 x 21.5cm between adjacent sensors).
+SENSOR_BASELINE_CM = 43.0
+
+# Below this tilt, the vehicle is treated as parallel to the obstacle.
+ANGLE_STRAIGHT_THRESHOLD_DEG = 3.0
 
 _STATUS_PRIORITY = {
     "unknown": 0,
@@ -152,3 +159,58 @@ def get_current_situation(
         language,
     )
     return situation
+
+
+def calculate_vehicle_angle(
+    left: int | float | None,
+    right: int | float | None,
+) -> float | None:
+    """Estimate the vehicle's tilt, in degrees, relative to the surface behind it.
+
+    Positive angle: the right side is closer to the obstacle (steer left to
+    straighten out). Negative angle: the left side is closer (steer right).
+    Assumes a flat surface behind the car and sensors aimed straight back.
+    """
+    if left is None or right is None:
+        return None
+
+    return degrees(atan2(left - right, SENSOR_BASELINE_CM))
+
+
+def format_vehicle_angle(
+    left: int | float | None,
+    right: int | float | None,
+    language: str | None,
+) -> dict[str, object]:
+    """Combine the angle estimate with its localized guidance text."""
+    angle = calculate_vehicle_angle(left, right)
+
+    if angle is None:
+        return {
+            "angle": None,
+            "text": get_angle_template(language, "unavailable"),
+        }
+
+    if abs(angle) < ANGLE_STRAIGHT_THRESHOLD_DEG:
+        text = get_angle_template(language, "straight")
+    elif angle > 0:
+        text = get_angle_template(language, "tilted_right").format(
+            angle=f"{abs(angle):.1f}"
+        )
+    else:
+        text = get_angle_template(language, "tilted_left").format(
+            angle=f"{abs(angle):.1f}"
+        )
+
+    return {"angle": round(angle, 1), "text": text}
+
+
+def get_vehicle_angle(
+    sensor_values: Mapping[str, object] | None,
+    language: str | None,
+) -> dict[str, object]:
+    """Read left/right sensor values and return the angle estimate + display text."""
+    readings_source = sensor_values if isinstance(sensor_values, Mapping) else {}
+    left = normalize_distance(_sensor_value(readings_source, "left"))
+    right = normalize_distance(_sensor_value(readings_source, "right"))
+    return format_vehicle_angle(left, right, language)

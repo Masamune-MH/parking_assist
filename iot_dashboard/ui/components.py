@@ -312,6 +312,20 @@ def current_situation_card(content: str) -> None:
     )
 
 
+def vehicle_angle_card(content: str) -> None:
+    render_html(
+        f"""
+        <article class="assistance-card vehicle-angle" aria-labelledby="vehicle-angle-title">
+            <div class="assistance-card__heading">
+                <span class="information-icon" aria-hidden="true">∠</span>
+                <h2 id="vehicle-angle-title">{escape(text("vehicle_angle"))}</h2>
+            </div>
+            <p>{escape(content)}</p>
+        </article>
+        """
+    )
+
+
 def ai_suggestion_card(content: str) -> None:
     render_html(
         f"""
@@ -378,6 +392,16 @@ def _current_situation_content(situation: Mapping[str, object] | None) -> str:
     return "Sensor readings are temporarily unavailable."
 
 
+def _vehicle_angle_content(angle_info: Mapping[str, object] | None) -> str:
+    if isinstance(angle_info, Mapping):
+        return str(
+            angle_info.get("text")
+            or "Vehicle angle cannot be determined right now."
+        )
+
+    return "Vehicle angle cannot be determined right now."
+
+
 def _ai_suggestion_content() -> str:
     default_suggestion = (
         "Reverse slowly while steering slightly toward the left. Continue "
@@ -398,9 +422,15 @@ def render_live_assistance(
     situation: Mapping[str, object] | None,
     current_situation_container: object,
     visualization_container: object,
+    angle_info: Mapping[str, object] | None = None,
+    vehicle_angle_container: object = None,
 ) -> None:
     with current_situation_container:
         current_situation_card(_current_situation_content(situation))
+
+    if vehicle_angle_container is not None:
+        with vehicle_angle_container:
+            vehicle_angle_card(_vehicle_angle_content(angle_info))
 
     with visualization_container:
         vehicle_sensor_visualization(sensor_data)
@@ -414,15 +444,21 @@ def render_live_ai_suggestion(
         ai_suggestion_card(suggestion)
 
 
-def assistance_view() -> tuple[object, object, object]:
+def assistance_view() -> tuple[object, object, object, object]:
     current_situation_container = st.empty()
+    vehicle_angle_container = st.empty()
     ai_suggestion_container = st.empty()
     with ai_suggestion_container:
         ai_suggestion_card(_ai_suggestion_content())
     visualization_container = st.empty()
     audio_controls()
 
-    return current_situation_container, ai_suggestion_container, visualization_container
+    return (
+        current_situation_container,
+        vehicle_angle_container,
+        ai_suggestion_container,
+        visualization_container,
+    )
 
 
 def assistance_placeholder_view() -> None:

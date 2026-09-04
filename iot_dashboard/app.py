@@ -2,7 +2,7 @@ from pathlib import Path
 from config.languages import DEFAULT_LANGUAGE, normalize_language
 from services.llm_service import get_parking_guidance
 from services.firebase_service import get_parking_data
-from services.situation_service import get_current_situation
+from services.situation_service import get_current_situation, get_vehicle_angle
 import streamlit as st
 
 from ui.components import (
@@ -89,6 +89,7 @@ def main() -> None:
         sensor_panel_container = st.empty()
 
     current_situation_container = None
+    vehicle_angle_container = None
     ai_suggestion_container = None
     visualization_container = None
     with content_column:
@@ -108,13 +109,23 @@ def main() -> None:
                     current_lang,
                 )
                 distances = _resolve_distances(initial_situation)
-                advice = get_parking_guidance(*distances, language=current_lang)
+                initial_angle = get_vehicle_angle(initial_sensor_data, current_lang)
+                advice = get_parking_guidance(
+                    *distances,
+                    language=current_lang,
+                    angle_deg=initial_angle["angle"],
+                )
                 st.session_state.ai_result = {
                     "suggestion": advice
                 }
                 st.session_state.ai_sensor_snapshot = distances
 
-            current_situation_container, ai_suggestion_container, visualization_container = assistance_view()
+            (
+                current_situation_container,
+                vehicle_angle_container,
+                ai_suggestion_container,
+                visualization_container,
+            ) = assistance_view()
         else:
             st.session_state.view = "home"
             st.rerun()
@@ -130,16 +141,20 @@ def main() -> None:
         if (
             st.session_state.view == "assistance"
             and current_situation_container is not None
+            and vehicle_angle_container is not None
             and ai_suggestion_container is not None
             and visualization_container is not None
         ):
             live_language = normalize_language(st.session_state.get("language"))
             live_situation = get_current_situation(live_sensor_data, live_language)
+            live_angle = get_vehicle_angle(live_sensor_data, live_language)
             render_live_assistance(
                 live_sensor_data,
                 live_situation,
                 current_situation_container,
                 visualization_container,
+                angle_info=live_angle,
+                vehicle_angle_container=vehicle_angle_container,
             )
 
             live_distances = _resolve_distances(live_situation)
@@ -148,7 +163,11 @@ def main() -> None:
                 live_distances,
             ):
                 st.session_state.ai_result = {
-                    "suggestion": get_parking_guidance(*live_distances, language=live_language)
+                    "suggestion": get_parking_guidance(
+                        *live_distances,
+                        language=live_language,
+                        angle_deg=live_angle["angle"],
+                    )
                 }
                 st.session_state.ai_sensor_snapshot = live_distances
 

@@ -38,7 +38,13 @@ def _extract_openrouter_text(response_data: dict) -> str:
         raise ValueError("Failed to parse OpenRouter response")
 
 
-def get_parking_guidance(left: float, center: float, right: float, language: str = "Tiếng Việt") -> str:
+def get_parking_guidance(
+    left: float,
+    center: float,
+    right: float,
+    language: str = "Tiếng Việt",
+    angle_deg: float | None = None,
+) -> str:
     """
     Xử lý dữ liệu cảm biến và tạo câu lệnh chỉ dẫn bằng AI theo ngôn ngữ được chọn.
     Dùng OpenRouter API thay vì Google Gemini SDK để tương thích với key OpenRouter.
@@ -53,12 +59,29 @@ def get_parking_guidance(left: float, center: float, right: float, language: str
     if not api_key:
         return default_responses.get(language, "Unable to process at this time.")
 
+    if angle_deg is None:
+        angle_context = "Estimated vehicle tilt: unknown."
+    elif abs(angle_deg) < 3:
+        angle_context = "Estimated vehicle tilt: roughly parallel to the obstacle behind it."
+    else:
+        tilt_side = "right" if angle_deg > 0 else "left"
+        angle_context = (
+            f"Estimated vehicle tilt: about {abs(angle_deg):.1f} degrees, "
+            f"with the rear-{tilt_side} side closer to the obstacle behind it."
+        )
+
     prompt = f"""
     You are a professional in-car parking and driving assistant sitting in the passenger seat.
     Real-time rear sensor distance data:
     - Left: {left} cm
     - Center: {center} cm
     - Right: {right} cm
+    - {angle_context}
+
+    Decide the single most useful instruction to say right now:
+    - If the tilt is small (under ~10 degrees) and there is enough clearance on all sides, give a short steering correction (e.g. steer slightly left/right while reversing).
+    - If the tilt is large (roughly 15 degrees or more) and the near side is getting close (under ~15 cm), steering alone will not straighten the car out in the remaining space. In that case, tell the driver to stop, pull forward a little, straighten the wheel, and reverse again to correct the angle (a correction maneuver / 切り返し), instead of just telling them to keep steering.
+    - If any side is critically close (under ~10 cm) regardless of angle, prioritize telling the driver to stop immediately.
 
     Requirement: Provide an extremely short, natural driving instruction sentence spoken directly to the driver in this exact language: {language}.
     """

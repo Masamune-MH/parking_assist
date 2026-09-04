@@ -11,6 +11,7 @@ LANGUAGE_CONFIG = MappingProxyType(
         "English": {
             "ui": {
                 "current_situation": "Current Situation",
+                "vehicle_angle": "Vehicle Angle",
                 "ai_suggestion": "AI Suggestion",
                 "get_assistance": "Get Assistance",
                 "generate_new": "Generate New",
@@ -37,6 +38,12 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "safe": "All available obstacle-distance readings are safe. The nearest reading is on the {direction} side at {distance} cm.",
                 "unavailable": "Sensor readings are temporarily unavailable.",
             },
+            "angle_templates": {
+                "straight": "The vehicle is roughly parallel to the surface behind it.",
+                "tilted_right": "The rear-right side is closer to the obstacle (about {angle}° off). Steer slightly left to straighten out.",
+                "tilted_left": "The rear-left side is closer to the obstacle (about {angle}° off). Steer slightly right to straighten out.",
+                "unavailable": "Vehicle angle cannot be determined right now.",
+            },
             "llm_instruction": (
                 "Provide an extremely short, natural driving instruction in English."
             ),
@@ -44,6 +51,7 @@ LANGUAGE_CONFIG = MappingProxyType(
         "Japanese": {
             "ui": {
                 "current_situation": "現在の状況",
+                "vehicle_angle": "車両の角度",
                 "ai_suggestion": "AI提案",
                 "get_assistance": "支援を開始",
                 "generate_new": "新しく生成",
@@ -70,6 +78,12 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "safe": "利用可能な障害物距離の測定値はすべて安全です。最も近い測定値は{direction}側の{distance}cmです。",
                 "unavailable": "センサーの読み取り値を一時的に取得できません。",
             },
+            "angle_templates": {
+                "straight": "車両は背後の障害物とほぼ平行です。",
+                "tilted_right": "車両後方の右側が障害物に近づいています(約{angle}°のずれ)。ハンドルを少し左に切って調整してください。",
+                "tilted_left": "車両後方の左側が障害物に近づいています(約{angle}°のずれ)。ハンドルを少し右に切って調整してください。",
+                "unavailable": "現在、車両の角度を計算できません。",
+            },
             "llm_instruction": (
                 "Provide an extremely short, natural driving instruction in Japanese."
             ),
@@ -77,6 +91,7 @@ LANGUAGE_CONFIG = MappingProxyType(
         "Tiếng Việt": {
             "ui": {
                 "current_situation": "Tình huống hiện tại",
+                "vehicle_angle": "Góc nghiêng xe",
                 "ai_suggestion": "Gợi ý AI",
                 "get_assistance": "Nhận hỗ trợ",
                 "generate_new": "Tạo mới",
@@ -102,6 +117,12 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "warning": "Phát hiện chướng ngại vật ở mức cảnh báo bên {direction}, cách {distance} cm.",
                 "safe": "Các khoảng cách chướng ngại vật hiện có đều an toàn. Giá trị gần nhất là {distance} cm ở bên {direction}.",
                 "unavailable": "Tạm thời không có dữ liệu cảm biến.",
+            },
+            "angle_templates": {
+                "straight": "Xe gần như song song với chướng ngại vật phía sau.",
+                "tilted_right": "Phía sau bên phải xe đang gần chướng ngại vật hơn (lệch khoảng {angle}°). Đánh nhẹ vô-lăng sang trái để chỉnh thẳng.",
+                "tilted_left": "Phía sau bên trái xe đang gần chướng ngại vật hơn (lệch khoảng {angle}°). Đánh nhẹ vô-lăng sang phải để chỉnh thẳng.",
+                "unavailable": "Hiện chưa thể xác định góc nghiêng của xe.",
             },
             "llm_instruction": (
                 "Provide an extremely short, natural driving instruction in Vietnamese."
@@ -174,6 +195,20 @@ def get_situation_template(language: str | None, status: str) -> str:
     default_templates = LANGUAGE_CONFIG[DEFAULT_LANGUAGE]["situation_templates"]
     if isinstance(default_templates, Mapping) and status in default_templates:
         return str(default_templates[status])
+
+    return str(default_templates["unavailable"])
+
+
+def get_angle_template(language: str | None, key: str) -> str:
+    config = get_language_config(language)
+    templates = config["angle_templates"]
+
+    if isinstance(templates, Mapping) and key in templates:
+        return str(templates[key])
+
+    default_templates = LANGUAGE_CONFIG[DEFAULT_LANGUAGE]["angle_templates"]
+    if isinstance(default_templates, Mapping) and key in default_templates:
+        return str(default_templates[key])
 
     return str(default_templates["unavailable"])
 
