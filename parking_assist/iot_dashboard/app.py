@@ -13,7 +13,7 @@ from services.assistance_service import (
     sensor_snapshot_from_situation,
     should_generate_assistance,
 )
-from services.situation_service import get_current_situation
+from services.situation_service import get_current_situation, get_vehicle_angle
 from ui.components import (
     ai_assistance_area,
     app_footer,
@@ -138,6 +138,7 @@ def main() -> None:
         if st.session_state.view == "home":
             home_view()
             current_situation_placeholder = None
+            vehicle_angle_placeholder = None
             ai_assistance_placeholder = None
             visualization_placeholder = None
         else:
@@ -147,6 +148,7 @@ def main() -> None:
 
             (
                 current_situation_placeholder,
+                vehicle_angle_placeholder,
                 ai_assistance_placeholder,
                 visualization_placeholder,
             ) = assistance_view()
@@ -161,11 +163,14 @@ def main() -> None:
             return
 
         situation = get_current_situation(sensor_data, DEFAULT_LANGUAGE)
+        angle_info = get_vehicle_angle(sensor_data, DEFAULT_LANGUAGE)
         render_live_assistance(
             sensor_data,
             situation,
             current_situation_placeholder,
             visualization_placeholder,
+            angle_info=angle_info,
+            vehicle_angle_placeholder=vehicle_angle_placeholder,
         )
 
         sensor_snapshot = sensor_snapshot_from_situation(situation)

@@ -276,6 +276,20 @@ def current_situation_card(text: str) -> None:
     )
 
 
+def vehicle_angle_card(text: str) -> None:
+    render_html(
+        f"""
+        <article class="assistance-card vehicle-angle" aria-labelledby="vehicle-angle-title">
+            <div class="assistance-card__heading">
+                <span class="information-icon" aria-hidden="true">∠</span>
+                <h2 id="vehicle-angle-title">{escape(get_ui_text(DEFAULT_LANGUAGE, 'vehicle_angle'))}</h2>
+            </div>
+            <p>{escape(text)}</p>
+        </article>
+        """
+    )
+
+
 def ai_suggestion_card(text: str) -> None:
     render_html(
         f"""
@@ -336,21 +350,31 @@ def render_live_assistance(
     situation: Mapping[str, object],
     current_situation_placeholder: object,
     visualization_placeholder: object,
+    angle_info: Mapping[str, object] | None = None,
+    vehicle_angle_placeholder: object = None,
 ) -> None:
     current_situation = situation.get("current_situation")
     with current_situation_placeholder.container():
         current_situation_card(str(current_situation or "Sensor readings are temporarily unavailable."))
+
+    if vehicle_angle_placeholder is not None:
+        angle_text = angle_info.get("text") if isinstance(angle_info, Mapping) else None
+        with vehicle_angle_placeholder.container():
+            vehicle_angle_card(str(angle_text or "Vehicle angle cannot be determined right now."))
+
     with visualization_placeholder.container():
         vehicle_sensor_visualization(sensor_data)
 
 
-def assistance_view() -> tuple[object, object, object]:
+def assistance_view() -> tuple[object, object, object, object]:
     current_situation_placeholder = st.empty()
+    vehicle_angle_placeholder = st.empty()
     ai_assistance_placeholder = st.empty()
     visualization_placeholder = st.empty()
     audio_controls()
     return (
         current_situation_placeholder,
+        vehicle_angle_placeholder,
         ai_assistance_placeholder,
         visualization_placeholder,
     )

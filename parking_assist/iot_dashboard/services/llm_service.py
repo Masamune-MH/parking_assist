@@ -7,13 +7,28 @@ import requests
 
 from config.languages import (
     DEFAULT_LANGUAGE,
+    get_guidance_template,
     get_llm_instruction,
-    get_ui_text,
     normalize_language,
 )
+from services.situation_service import decide_guidance_category
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3.5-lightning:free"
+
+CATEGORY_DESCRIPTIONS = {
+    "stop": "the obstacle is critically close; tell the driver to stop immediately",
+    "correction_maneuver": (
+        "the vehicle is too angled for steering alone to fix in the space left; tell the "
+        "driver to stop, pull forward a little, straighten the wheel, and reverse again"
+    ),
+    "steer_left": "tell the driver to steer slightly left while reversing",
+    "steer_right": "tell the driver to steer slightly right while reversing",
+    "continue_straight": (
+        "the vehicle is essentially straight with no urgent issue; tell the driver to "
+        "continue reversing steadily (do not invent a steering correction)"
+    ),
+}
 
 
 @st.cache_resource
@@ -58,60 +73,30 @@ def _extract_openrouter_text(response_data: dict) -> str:
         raise ValueError("Failed to parse OpenRouter response")
 
 
-def _format_distance(value: object) -> str:
-    if value is None:
-        return "unavailable"
-
-    try:
-        distance = float(value)
-    except (TypeError, ValueError):
-        return "unavailable"
-
-    if distance.is_integer():
-        return f"{int(distance)} cm"
-
-    return f"{distance:.1f} cm"
-
-
-def _objective_value(objective_condition: Mapping[str, object], key: str) -> str:
-    value = objective_condition.get(key)
-    return "unavailable" if value is None else str(value)
-
-
-def build_parking_guidance_prompt(
-    sensor_snapshot: Mapping[str, object],
-    objective_condition: Mapping[str, object],
-    language: str | None,
-) -> str:
-    """Build guidance instructions from facts already determined by Python."""
+def build_parking_guidance_prompt(category: str, language: str | None) -> str:
+    """Phrase a category that Python has already decided — never re-derive it here."""
     selected_language = normalize_language(language)
 
     return dedent(
         f"""
-        You are an in-car parking guidance assistant.
+        You are an in-car parking guidance assistant, speaking naturally to the driver
+        like a helpful human co-pilot — not a robot reading out rules.
 
         Language instruction: {get_llm_instruction(selected_language)}
 
-        Sensor snapshot captured when the driver requested assistance:
-        - Left distance: {_format_distance(sensor_snapshot.get('left'))}
-        - Center distance: {_format_distance(sensor_snapshot.get('center'))}
-        - Right distance: {_format_distance(sensor_snapshot.get('right'))}
-
-        Deterministic objective condition from Python. This is authoritative:
-        - Nearest direction: {_objective_value(objective_condition, 'nearest_direction')}
-        - Nearest distance: {_format_distance(objective_condition.get('nearest_distance'))}
-        - Overall risk level: {_objective_value(objective_condition, 'overall_status')}
+        The instruction to give has already been decided by the sensor-analysis system
+        (this is authoritative — do not re-derive, second-guess, or contradict it):
+        {CATEGORY_DESCRIPTIONS[category]}.
 
         Safety constraints:
-        - Give concise, practical parking guidance only.
-        - Do not invent obstacle types.
-        - Ultrasonic sensors provide only distance and direction context.
-        - Do not claim an obstacle is a car, wall, person, vehicle, or any other type.
-        - Do not override, reinterpret, or contradict the objective condition supplied by Python.
+        - Phrase that exact instruction as ONE short, natural spoken sentence. Vary the
+          wording naturally each time rather than sounding robotic.
+        - Do not mention specific distances, degrees, or which side (left/right) triggered this.
+        - Do not invent obstacle types (car, wall, person, etc.) — ultrasonic sensors only
+          provide distance and direction context.
         - Respond only in the selected language.
-        - Avoid unnecessary explanation.
-        - Do not include analysis, reasoning, or numbered steps.
-        - Provide a short safe driving tips at the end of your response. No need to begin with "Safe Driving Tips", just tell it directly.
+        - Avoid unnecessary explanation. Do not include analysis, reasoning, or numbered steps.
+        - Provide a short safe driving tip at the end of your response. No need to begin with "Safe Driving Tips", just tell it directly.
         """
     ).strip()
 
@@ -123,18 +108,20 @@ def get_parking_guidance(
 ) -> str:
     """Request concise guidance without performing sensor analysis in the LLM layer."""
     selected_language = normalize_language(language)
-    failure_message = get_ui_text(selected_language, "ai_request_failed")
+    category = decide_guidance_category(
+        sensor_snapshot.get("left"),
+        sensor_snapshot.get("center"),
+        sensor_snapshot.get("right"),
+        objective_condition.get("angle_deg"),
+    )
+    failure_message = get_guidance_template(selected_language, category)
 
     try:
         api_key = get_openrouter_api_key()
         if not api_key:
             return failure_message
 
-        prompt = build_parking_guidance_prompt(
-            sensor_snapshot,
-            objective_condition,
-            selected_language,
-        )
+        prompt = build_parking_guidance_prompt(category, selected_language)
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",

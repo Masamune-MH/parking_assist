@@ -11,6 +11,7 @@ LANGUAGE_CONFIG = MappingProxyType(
         "English": {
             "ui": {
                 "current_situation": "Current Situation",
+                "vehicle_angle": "Vehicle Angle",
                 "ai_suggestion": "AI Suggestion",
                 "get_assistance": "Get Assistance",
                 "generate_new": "Generate New",
@@ -43,6 +44,19 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "safe": "All available obstacle-distance readings are safe. The nearest reading is on the {direction} side at {distance} cm.",
                 "unavailable": "Sensor readings are temporarily unavailable.",
             },
+            "angle_templates": {
+                "straight": "The vehicle is roughly parallel to the surface behind it (~0°).",
+                "tilted_right": "Tilted about {angle}° — the rear-right side is closer to the obstacle.",
+                "tilted_left": "Tilted about {angle}° — the rear-left side is closer to the obstacle.",
+                "unavailable": "Vehicle angle cannot be determined right now.",
+            },
+            "guidance_templates": {
+                "stop": "Stop now, you're very close to an obstacle.",
+                "correction_maneuver": "Stop, pull forward a little, straighten the wheel, and reverse again.",
+                "steer_left": "Steer slightly left while reversing.",
+                "steer_right": "Steer slightly right while reversing.",
+                "continue_straight": "Looking good, continue reversing slowly and steadily.",
+            },
             "llm_instruction": (
                 "Provide an extremely short, natural driving instruction in English."
             ),
@@ -51,6 +65,7 @@ LANGUAGE_CONFIG = MappingProxyType(
         "Japanese": {
             "ui": {
                 "current_situation": "現在の状況",
+                "vehicle_angle": "車両の角度",
                 "ai_suggestion": "AI提案",
                 "get_assistance": "支援を開始",
                 "generate_new": "新しく生成",
@@ -83,6 +98,19 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "safe": "利用可能な障害物距離の測定値はすべて安全です。最も近い測定値は{direction}側の{distance}cmです。",
                 "unavailable": "センサーの読み取り値を一時的に取得できません。",
             },
+            "angle_templates": {
+                "straight": "背後の障害物とほぼ平行です(約0°)。",
+                "tilted_right": "約{angle}°傾いています(右後方が障害物に近い)。",
+                "tilted_left": "約{angle}°傾いています(左後方が障害物に近い)。",
+                "unavailable": "現在、車両の角度を計算できません。",
+            },
+            "guidance_templates": {
+                "stop": "今すぐ停止してください。障害物にとても近づいています。",
+                "correction_maneuver": "一度停止して少し前に進み、ハンドルを戻してからもう一度バックしてください。",
+                "steer_left": "ハンドルを少し左に切りながら下がってください。",
+                "steer_right": "ハンドルを少し右に切りながら下がってください。",
+                "continue_straight": "良い状態です。そのままゆっくり下がってください。",
+            },
             "llm_instruction": (
                 "Provide an extremely short, natural driving instruction in Japanese."
             ),
@@ -91,6 +119,7 @@ LANGUAGE_CONFIG = MappingProxyType(
         "Tiếng Việt": {
             "ui": {
                 "current_situation": "Tình huống hiện tại",
+                "vehicle_angle": "Góc nghiêng xe",
                 "ai_suggestion": "Gợi ý AI",
                 "get_assistance": "Nhận hỗ trợ",
                 "generate_new": "Tạo mới",
@@ -122,6 +151,19 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "warning": "Phát hiện chướng ngại vật ở mức cảnh báo bên {direction}, cách {distance} cm.",
                 "safe": "Các khoảng cách chướng ngại vật hiện có đều an toàn. Giá trị gần nhất là {distance} cm ở bên {direction}.",
                 "unavailable": "Tạm thời không có dữ liệu cảm biến.",
+            },
+            "angle_templates": {
+                "straight": "Xe gần như song song với chướng ngại vật phía sau (~0°).",
+                "tilted_right": "Lệch khoảng {angle}° — phía sau bên phải xe gần chướng ngại vật hơn.",
+                "tilted_left": "Lệch khoảng {angle}° — phía sau bên trái xe gần chướng ngại vật hơn.",
+                "unavailable": "Hiện chưa thể xác định góc nghiêng của xe.",
+            },
+            "guidance_templates": {
+                "stop": "Dừng lại ngay, bạn đang rất gần chướng ngại vật.",
+                "correction_maneuver": "Dừng lại, tiến lên một chút, đánh thẳng vô-lăng rồi lùi lại.",
+                "steer_left": "Đánh nhẹ vô-lăng sang trái trong khi lùi.",
+                "steer_right": "Đánh nhẹ vô-lăng sang phải trong khi lùi.",
+                "continue_straight": "Ổn rồi, tiếp tục lùi chậm và đều.",
             },
             "llm_instruction": (
                 "Provide an extremely short, natural driving instruction in Vietnamese."
@@ -194,6 +236,34 @@ def get_situation_template(language: str | None, status: str) -> str:
         return str(default_templates[status])
 
     return str(default_templates["unavailable"])
+
+
+def get_angle_template(language: str | None, key: str) -> str:
+    config = get_language_config(language)
+    templates = config["angle_templates"]
+
+    if isinstance(templates, Mapping) and key in templates:
+        return str(templates[key])
+
+    default_templates = LANGUAGE_CONFIG[DEFAULT_LANGUAGE]["angle_templates"]
+    if isinstance(default_templates, Mapping) and key in default_templates:
+        return str(default_templates[key])
+
+    return str(default_templates["unavailable"])
+
+
+def get_guidance_template(language: str | None, category: str) -> str:
+    config = get_language_config(language)
+    templates = config["guidance_templates"]
+
+    if isinstance(templates, Mapping) and category in templates:
+        return str(templates[category])
+
+    default_templates = LANGUAGE_CONFIG[DEFAULT_LANGUAGE]["guidance_templates"]
+    if isinstance(default_templates, Mapping) and category in default_templates:
+        return str(default_templates[category])
+
+    return str(default_templates["continue_straight"])
 
 
 def get_llm_instruction(language: str | None) -> str:

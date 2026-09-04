@@ -3,6 +3,8 @@
 from math import isfinite
 from typing import Mapping
 
+from services.situation_service import calculate_vehicle_angle
+
 
 SENSOR_CHANGE_THRESHOLD_CM = 10.0
 LLM_COOLDOWN_SECONDS = 8.0
@@ -22,10 +24,12 @@ def sensor_snapshot_from_situation(situation: Mapping[str, object]) -> dict[str,
 
 
 def objective_condition_from_situation(situation: Mapping[str, object]) -> dict[str, object]:
+    snapshot = sensor_snapshot_from_situation(situation)
     return {
         "nearest_direction": situation.get("nearest_direction"),
         "nearest_distance": situation.get("nearest_distance"),
         "overall_status": situation.get("overall_status"),
+        "angle_deg": calculate_vehicle_angle(snapshot["left"], snapshot["right"]),
     }
 
 
