@@ -35,17 +35,17 @@ const unsigned long SEND_INTERVAL = 1000;
 // HC-SR04 GPIO
 // =========================
 
-// 左
-const int LEFT_TRIG = 16;
-const int LEFT_ECHO = 18;
+// 左(運転手から見た左側。物理配線はドライバー基準に合わせて左右を入れ替え済み)
+const int LEFT_TRIG = 22;
+const int LEFT_ECHO = 23;
 
 // 中央
 const int CENTER_TRIG = 19;
 const int CENTER_ECHO = 21;
 
-// 右
-const int RIGHT_TRIG = 22;
-const int RIGHT_ECHO = 23;
+// 右(運転手から見た右側。物理配線はドライバー基準に合わせて左右を入れ替え済み)
+const int RIGHT_TRIG = 16;
+const int RIGHT_ECHO = 18;
 
 
 // =========================
