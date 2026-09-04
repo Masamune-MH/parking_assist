@@ -98,6 +98,36 @@ class AssistanceServiceTests(unittest.TestCase):
             )
         )
 
+    def test_steering_direction_flip_is_significant_even_under_threshold(self) -> None:
+        # Left and right swap by only 6cm each (under the 10cm threshold), and
+        # center stays the nearest side throughout, so none of the existing
+        # checks (status/nearest_direction/per-sensor distance) would catch
+        # this on their own — but the steering instruction flips from
+        # "steer_left" to "steer_right".
+        previous_snapshot = {"left": 45, "center": 25, "right": 39}
+        previous_condition = {
+            "nearest_direction": "center",
+            "nearest_distance": 25,
+            "overall_status": "safe",
+            "angle_deg": 7.9,
+        }
+        current_snapshot = {"left": 39, "center": 25, "right": 45}
+        current_condition = {
+            "nearest_direction": "center",
+            "nearest_distance": 25,
+            "overall_status": "safe",
+            "angle_deg": -7.9,
+        }
+
+        self.assertTrue(
+            has_significant_change(
+                current_snapshot,
+                current_condition,
+                previous_snapshot,
+                previous_condition,
+            )
+        )
+
     def test_incomplete_firebase_reading_defers_assistance(self) -> None:
         self.assertFalse(
             should_generate_assistance(

@@ -3,7 +3,7 @@
 from math import isfinite
 from typing import Mapping
 
-from services.situation_service import calculate_vehicle_angle
+from services.situation_service import calculate_vehicle_angle, decide_guidance_category
 
 
 SENSOR_CHANGE_THRESHOLD_CM = 10.0
@@ -52,6 +52,25 @@ def has_complete_sensor_snapshot(snapshot: Mapping[str, object]) -> bool:
     return all(_distance(snapshot.get(direction)) is not None for direction in SENSOR_DIRECTIONS)
 
 
+def _guidance_category(
+    snapshot: Mapping[str, object],
+    condition: Mapping[str, object],
+) -> str | None:
+    left = _distance(snapshot.get("left"))
+    center = _distance(snapshot.get("center"))
+    right = _distance(snapshot.get("right"))
+    if left is None or center is None or right is None:
+        return None
+
+    angle_deg = condition.get("angle_deg")
+    return decide_guidance_category(
+        left,
+        center,
+        right,
+        angle_deg if isinstance(angle_deg, (int, float)) else None,
+    )
+
+
 def has_significant_change(
     current_snapshot: Mapping[str, object],
     current_condition: Mapping[str, object],
@@ -66,6 +85,14 @@ def has_significant_change(
         return True
 
     if current_condition.get("nearest_direction") != previous_condition.get("nearest_direction"):
+        return True
+
+    # Distances can shift under the per-sensor threshold on both sides at once
+    # (e.g. left/right swapping which one is closer), flipping which way the
+    # driver should steer without tripping any of the checks above.
+    if _guidance_category(current_snapshot, current_condition) != _guidance_category(
+        previous_snapshot, previous_condition
+    ):
         return True
 
     for direction in SENSOR_DIRECTIONS:
