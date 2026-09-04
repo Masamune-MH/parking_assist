@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from config.languages import DEFAULT_LANGUAGE, normalize_language
 from services.llm_service import get_parking_guidance
@@ -20,6 +21,7 @@ from ui.components import (
 BASE_DIR = Path(__file__).parent
 
 AI_REFRESH_THRESHOLD_CM = 5
+AI_REFRESH_MIN_INTERVAL_SECONDS = 8.0
 
 
 def _distances_changed_significantly(
@@ -67,6 +69,9 @@ def initialize_state() -> None:
 
     if "ai_sensor_snapshot" not in st.session_state:
         st.session_state.ai_sensor_snapshot = None
+
+    if "ai_last_update_time" not in st.session_state:
+        st.session_state.ai_last_update_time = 0.0
 
     if "audio_enabled" not in st.session_state:
         st.session_state.audio_enabled = True
@@ -119,6 +124,7 @@ def main() -> None:
                     "suggestion": advice
                 }
                 st.session_state.ai_sensor_snapshot = distances
+                st.session_state.ai_last_update_time = time.monotonic()
 
             (
                 current_situation_container,
@@ -158,9 +164,13 @@ def main() -> None:
             )
 
             live_distances = _resolve_distances(live_situation)
-            if _distances_changed_significantly(
-                st.session_state.ai_sensor_snapshot,
-                live_distances,
+            time_since_last_update = time.monotonic() - st.session_state.ai_last_update_time
+            if (
+                _distances_changed_significantly(
+                    st.session_state.ai_sensor_snapshot,
+                    live_distances,
+                )
+                and time_since_last_update >= AI_REFRESH_MIN_INTERVAL_SECONDS
             ):
                 st.session_state.ai_result = {
                     "suggestion": get_parking_guidance(
@@ -170,6 +180,7 @@ def main() -> None:
                     )
                 }
                 st.session_state.ai_sensor_snapshot = live_distances
+                st.session_state.ai_last_update_time = time.monotonic()
 
             render_live_ai_suggestion(
                 ai_suggestion_container,
