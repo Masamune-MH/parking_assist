@@ -39,9 +39,9 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "unavailable": "Sensor readings are temporarily unavailable.",
             },
             "angle_templates": {
-                "straight": "The vehicle is roughly parallel to the surface behind it.",
-                "tilted_right": "The rear-right side is closer to the obstacle (about {angle}° off). Steer slightly left to straighten out.",
-                "tilted_left": "The rear-left side is closer to the obstacle (about {angle}° off). Steer slightly right to straighten out.",
+                "straight": "The vehicle is roughly parallel to the surface behind it (~0°).",
+                "tilted_right": "Tilted about {angle}° — the rear-right side is closer to the obstacle.",
+                "tilted_left": "Tilted about {angle}° — the rear-left side is closer to the obstacle.",
                 "unavailable": "Vehicle angle cannot be determined right now.",
             },
             "llm_instruction": (
@@ -79,9 +79,9 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "unavailable": "センサーの読み取り値を一時的に取得できません。",
             },
             "angle_templates": {
-                "straight": "車両は背後の障害物とほぼ平行です。",
-                "tilted_right": "車両後方の右側が障害物に近づいています(約{angle}°のずれ)。ハンドルを少し左に切って調整してください。",
-                "tilted_left": "車両後方の左側が障害物に近づいています(約{angle}°のずれ)。ハンドルを少し右に切って調整してください。",
+                "straight": "背後の障害物とほぼ平行です(約0°)。",
+                "tilted_right": "約{angle}°傾いています(右後方が障害物に近い)。",
+                "tilted_left": "約{angle}°傾いています(左後方が障害物に近い)。",
                 "unavailable": "現在、車両の角度を計算できません。",
             },
             "llm_instruction": (
@@ -119,9 +119,9 @@ LANGUAGE_CONFIG = MappingProxyType(
                 "unavailable": "Tạm thời không có dữ liệu cảm biến.",
             },
             "angle_templates": {
-                "straight": "Xe gần như song song với chướng ngại vật phía sau.",
-                "tilted_right": "Phía sau bên phải xe đang gần chướng ngại vật hơn (lệch khoảng {angle}°). Đánh nhẹ vô-lăng sang trái để chỉnh thẳng.",
-                "tilted_left": "Phía sau bên trái xe đang gần chướng ngại vật hơn (lệch khoảng {angle}°). Đánh nhẹ vô-lăng sang phải để chỉnh thẳng.",
+                "straight": "Xe gần như song song với chướng ngại vật phía sau (~0°).",
+                "tilted_right": "Lệch khoảng {angle}° — phía sau bên phải xe gần chướng ngại vật hơn.",
+                "tilted_left": "Lệch khoảng {angle}° — phía sau bên trái xe gần chướng ngại vật hơn.",
                 "unavailable": "Hiện chưa thể xác định góc nghiêng của xe.",
             },
             "llm_instruction": (
